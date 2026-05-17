@@ -7,23 +7,21 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Deploy to EC2 via Bastion
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.APP_HOST }}
-        username: ubuntu
-        key: ${{ secrets.EC2_KEY }}
-        proxy_host: ${{ secrets.BASTION_HOST }}
-        proxy_username: ubuntu
-        proxy_key: ${{ secrets.EC2_KEY }}
-        script: |
-          cd ~/learnhub
-          git pull origin main
-          docker-compose down
-          docker-compose up --build -d
-          sudo systemctl restart nginx
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_KEY }}" > ~/.ssh/learnhub-key.pem
+        chmod 600 ~/.ssh/learnhub-key.pem
+        ssh-keyscan -H ${{ secrets.BASTION_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy via Bastion
+      run: |
+        ssh -i ~/.ssh/learnhub-key.pem \
+          -o StrictHostKeyChecking=no \
+          -o ProxyCommand="ssh -i ~/.ssh/learnhub-key.pem -o StrictHostKeyChecking=no -W %h:%p ubuntu@${{ secrets.BASTION_HOST }}" \
+          ubuntu@${{ secrets.APP_HOST }} \
+          "cd ~/learnhub && git pull origin main && docker-compose down && docker-compose up --build -d && sudo systemctl restart nginx"
