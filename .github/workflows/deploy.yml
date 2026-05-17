@@ -12,12 +12,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Deploy to EC2
+    - name: Deploy to EC2 via Bastion
       uses: appleboy/ssh-action@master
       with:
-        host: ${{ secrets.EC2_HOST }}
+        host: ${{ secrets.APP_HOST }}
         username: ubuntu
         key: ${{ secrets.EC2_KEY }}
+        proxy_host: ${{ secrets.BASTION_HOST }}
+        proxy_username: ubuntu
+        proxy_key: ${{ secrets.EC2_KEY }}
         script: |
           cd ~/learnhub
           git pull origin main
