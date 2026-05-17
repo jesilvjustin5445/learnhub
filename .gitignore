@@ -1,0 +1,7 @@
+app/.env
+app/__pycache__/
+*.pyc
+*.pyo
+venv/
+*.key
+*.crt
