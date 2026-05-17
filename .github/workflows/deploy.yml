@@ -6,24 +6,16 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Setup SSH
-      env:
-        EC2_KEY: ${{ secrets.EC2_KEY }}
+    - name: Deploy
       run: |
-        mkdir -p ~/.ssh
-        echo "${EC2_KEY}" > ~/.ssh/learnhub-key.pem
-        chmod 600 ~/.ssh/learnhub-key.pem
-
-    - name: Deploy via Bastion
-      run: |
-        ssh -i ~/.ssh/learnhub-key.pem \
-          -o StrictHostKeyChecking=no \
-          -o ProxyCommand="ssh -i ~/.ssh/learnhub-key.pem -o StrictHostKeyChecking=no -W %h:%p ubuntu@${{ secrets.BASTION_HOST }}" \
-          ubuntu@${{ secrets.APP_HOST }} \
-          "cd ~/learnhub && git pull origin main && docker-compose down && docker-compose up --build -d && sudo systemctl restart nginx"
+        cd ~/learnhub
+        git pull origin main
+        docker-compose down
+        docker-compose up --build -d
+        sudo systemctl restart nginx
