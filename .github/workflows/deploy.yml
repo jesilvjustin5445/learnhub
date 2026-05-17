@@ -7,16 +7,18 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
     - name: Setup SSH
+      env:
+        EC2_KEY: ${{ secrets.EC2_KEY }}
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.EC2_KEY }}" > ~/.ssh/learnhub-key.pem
+        echo "${EC2_KEY}" > ~/.ssh/learnhub-key.pem
         chmod 600 ~/.ssh/learnhub-key.pem
-        ssh-keyscan -H ${{ secrets.BASTION_HOST }} >> ~/.ssh/known_hosts
 
     - name: Deploy via Bastion
       run: |
